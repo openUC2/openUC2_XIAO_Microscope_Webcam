@@ -1,0 +1,10 @@
+.DS_Store
+.vscode
+[Bb][Uu][Ii][Ll][Dd]
+components
+debug.log
+dependencies.lock
+managed_components
+partition_table
+sdkconfig
+sdkconfig.old

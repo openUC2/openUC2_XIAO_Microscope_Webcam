@@ -1,0 +1,81 @@
+name: CI/CD
+
+on:
+  push:
+  pull_request:
+    branches: ["develop"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target_board: [XIAO-ESP32S3-Sense]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          mkdir build
+          docker run --rm \
+          -v ${{github.workspace}}:/project \
+          -w /project \
+          -u $(id -u) \
+          -e HOME=/tmp \
+          -e IDF_TARGET=esp32s3 \
+          espressif/idf:release-v5.3.1 \
+          idf.py build > build/output.txt
+          cat build/output.txt | tee >(grep ' build/${{github.event.repository.name}}.bin' | awk '{for (i = 1; i <= NF; i++) {if ($i ~ /^0x[0-9a-fA-F]+$/) offset = $i; else if ($i ~ /\.bin$/) {gsub(/^.*\//, "", $i); print offset, $i}}}' > build/offsets.txt)
+
+      - name: Package
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mkdir build/${{matrix.target_board}}
+          grep 'storage' components/board/partitions.csv | awk -F, '{print $4 " storage.bin"}' | sed 's/^ //g' >> build/offsets.txt
+          cd build
+          awk '{printf "{\"offset\":\"%s\", \"file\":\"%s\"}\n", $1, $2}' offsets.txt | jq -c -s '.' > ${{matrix.target_board}}/offsets.json
+          cp bootloader/bootloader.bin partition_table/partition-table.bin ota_data_initial.bin ${{github.event.repository.name}}.bin storage.bin ${{matrix.target_board}}
+          tar -zcf ${{matrix.target_board}}.tar.gz ${{matrix.target_board}}
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/${{matrix.target_board}}.tar.gz
+          token: ${{secrets.ACTION_RELEASE_TOKEN}}
+          generate_release_notes: true
+          make_latest: true
+
+      - name: GitHubAssistantBot Preprocess
+        id: preprocess_commits
+        if: success() || failure()
+        run: |
+          commits_json=$(cat <<EOL
+          ${{toJson(github.event.commits)}}
+          EOL
+          )
+
+          echo "commits=$(echo "$commits_json" | jq -c '[.[] | {message: .message, url: .url}]' || echo "[]")" >> $GITHUB_OUTPUT
+
+      - name: GitHubAssistantBot
+        if: success() || failure()
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://node-red.geeken.me/github_assistant_bot'
+          data: |
+            {
+              "key": "${{secrets.ASSISTANT_BOT_KEY}}",
+              "actor": "${{github.actor}}",
+              "platform": "${{matrix.target_board}}",
+              "changes": "https://github.com/${{github.repository}}/commit/${{github.sha}}",
+              "commits": ${{steps.preprocess_commits.outputs.commits}},
+              "event": "${{github.event_name}}",
+              "reference": "${{github.ref_name}}",
+              "report": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+              "repository": "${{github.repository}}",
+              "status": "${{job.status}}"
+            }

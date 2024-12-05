@@ -1,0 +1,109 @@
+menu "USB WebCam config"
+
+    config CAMERA_XCLK_FREQ
+        int "XCLK frequency"
+        range 1000000 40000000
+        default 20000000
+        help
+            Select XCLK frequency.
+
+    menu "Camera Pin Configuration"
+
+        config CAMERA_PIN_PWDN
+            int "Power Down"
+            default -1
+            help
+                Select Power Down pin or -1 for unmanaged.
+
+        config CAMERA_PIN_RESET
+            int "Reset"
+            default -1
+            help
+                Select Camera Reset pin or -1 for software reset.
+
+        config CAMERA_PIN_XCLK
+            int "XCLK"
+            default 10
+            help
+                Select Camera XCLK pin.
+
+        config CAMERA_PIN_SIOD
+            int "SIOD"
+            default 40
+            help
+                Select Camera SIOD pin.
+
+        config CAMERA_PIN_SIOC
+            int "SIOC"
+            default 39
+            help
+                Select Camera SIOC pin.
+
+        config CAMERA_PIN_VSYNC
+            int "VSYNC"
+            default 38
+            help
+                Select Camera VSYNC pin.
+
+        config CAMERA_PIN_HREF
+            int "HREF"
+            default 47
+            help
+                Select Camera HREF pin.
+
+        config CAMERA_PIN_PCLK
+            int "PCLK"
+            default 13
+            help
+                Select Camera PCLK pin.
+
+        config CAMERA_PIN_Y2
+            int "Y2"
+            default 15
+            help
+                Select Camera Y2 pin.
+
+        config CAMERA_PIN_Y3
+            int "Y3"
+            default 17
+            help
+                Select Camera Y3 pin.
+
+        config CAMERA_PIN_Y4
+            int "Y4"
+            default 18
+            help
+                Select Camera Y4 pin.
+
+        config CAMERA_PIN_Y5
+            int "Y5"
+            default 16
+            help
+                Select Camera Y5 pin.
+
+        config CAMERA_PIN_Y6
+            int "Y6"
+            default 14
+            help
+                Select Camera Y6 pin.
+
+        config CAMERA_PIN_Y7
+            int "Y7"
+            default 12
+            help
+                Select Camera Y7 pin.
+
+        config CAMERA_PIN_Y8
+            int "Y8"
+            default 11
+            help
+                Select Camera Y8 pin.
+
+        config CAMERA_PIN_Y9
+            int "Y9"
+            default 48
+            help
+                Select Camera Y9 pin.
+
+    endmenu
+endmenu
