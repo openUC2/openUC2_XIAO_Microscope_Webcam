@@ -34,10 +34,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           mkdir build/${{matrix.target_board}}
-          grep 'storage' partitions.csv | awk -F, '{print $4 " storage.bin"}' | sed 's/^ //g' >> build/offsets.txt
           cd build
           awk '{printf "{\"offset\":\"%s\", \"file\":\"%s\"}\n", $1, $2}' offsets.txt | jq -c -s '.' > ${{matrix.target_board}}/offsets.json
-          cp bootloader/bootloader.bin partition_table/partition-table.bin ota_data_initial.bin ${{github.event.repository.name}}.bin storage.bin ${{matrix.target_board}}
+          cp bootloader/bootloader.bin partition_table/partition-table.bin ota_data_initial.bin ${{github.event.repository.name}}.bin ${{matrix.target_board}}
           tar -zcf ${{matrix.target_board}}.tar.gz ${{matrix.target_board}}
 
       - name: Release
