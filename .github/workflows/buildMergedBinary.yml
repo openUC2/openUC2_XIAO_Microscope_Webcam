@@ -32,8 +32,12 @@ jobs:
             0xe000 build/ota_data_initial.bin \
             0x10000 build/XIAO_Webcam.bin
 
-      - name: Upload Firmware
-        uses: actions/upload-artifact@v3
+      - name: Upload image to Job Artifacts
+        uses: actions/upload-artifact@v4
         with:
           path: merged_firmware.bin
           name: merged_firmware
+          if-no-files-found: error
+          retention-days: 0
+          compression-level: 0
+          overwrite: true
