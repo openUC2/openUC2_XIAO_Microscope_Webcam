@@ -33,7 +33,7 @@ jobs:
             0x10000 build/XIAO_Webcam.bin
 
       - name: Upload Firmware
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-            path: merged_firmware.bin
-            name: merged_firmware
+          path: merged_firmware.bin
+          name: merged_firmware
