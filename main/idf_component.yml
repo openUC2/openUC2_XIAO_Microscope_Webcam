@@ -1,4 +1,4 @@
 dependencies:
   idf: ">=5.0"
-  "espressif/usb_device_uvc^1.1.2"
+  espressif/usb_device_uvc^1.1.2
   esp32-camera: "=*"
