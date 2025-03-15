@@ -222,6 +222,9 @@ void app_main(void)
     gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_GPIO, 0x01);
 
+    // add  delay to have abbility to erase flash and add a new firmware
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    
     uint8_t *uvc_buffer = (uint8_t *)malloc(UVC_MAX_FRAMESIZE_SIZE);
 
     if (!uvc_buffer)
