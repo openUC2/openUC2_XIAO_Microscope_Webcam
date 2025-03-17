@@ -17,19 +17,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build
+      - name: Build and Merge
         run: |
           mkdir build
           docker run --rm \
-          -v ${{github.workspace}}:/project \
-          -w /project \
-          -u $(id -u) \
-          -e HOME=/tmp \
-          -e IDF_TARGET=esp32s3 \
-          espressif/idf:release-v5.3 \
-          idf.py build > build/output.txt
-          cat build/output.txt | tee >(grep ' build/${{github.event.repository.name}}.bin' | awk '{for (i = 1; i <= NF; i++) {if ($i ~ /^0x[0-9a-fA-F]+$/) offset = $i; else if ($i ~ /\.bin$/) {gsub(/^.*\//, "", $i); print offset, $i}}}' > build/offsets.txt)
-
+            -v ${{ github.workspace }}:/project \
+            -w /project \
+            -u $(id -u) \
+            -e HOME=/tmp \
+            -e IDF_TARGET=esp32s3 \
+            espressif/idf:release-v5.3 \
+            bash -c '
+              idf.py build &&
+              esptool.py --chip esp32s3 merge_bin -o merged_firmware.bin \
+                0x0 build/bootloader/bootloader.bin \
+                0x8000 build/partition_table/partition-table.bin \
+                0xe000 build/ota_data_initial.bin \
+                0x10000 build/XIAO_Webcam.bin
+            '
       - name: Package
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -50,22 +55,6 @@ jobs:
           make_latest: true
 
 
-      - name: Merge Binaries
-        run: |
-          docker run --rm \
-          -v ${{ github.workspace }}:/project \
-          -w /project \
-          -u $(id -u) \
-          -e HOME=/tmp \
-          -e IDF_TARGET=esp32s3 \
-          espressif/idf:release-v5.3 \
-          esptool.py --chip esp32s3 merge_bin -o merged_firmware.bin \
-            0x0 build/bootloader/bootloader.bin \
-            0x8000 build/partition_table/partition-table.bin \
-            0xe000 build/ota_data_initial.bin \
-            0x10000 XIAO_Webcam.bin
-
-  
       - name: Upload image to Job Artifacts
         uses: actions/upload-artifact@v4
         with:
