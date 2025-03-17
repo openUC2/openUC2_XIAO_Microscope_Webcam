@@ -6,6 +6,8 @@
 #include "esp_log.h"
 #include "soc/rtc_cntl_struct.h"
 #include "soc/usb_serial_jtag_reg.h"
+#include "rom/ets_sys.h"
+
 
 /* Function used to tell the linker to include this file
  * with all its symbols.
