@@ -66,10 +66,6 @@ jobs:
           overwrite: true
 
 
-          - uses: actions/upload-artifact@v4
-          with:
-            name: merged-firmware
-            path: build/UC2_WEMOS/esp32_UC2_WEMOS.bin
         
       - name: Push to youseetoo Webtool
         uses: dmnemec/copy_file_to_another_repo_action@main
