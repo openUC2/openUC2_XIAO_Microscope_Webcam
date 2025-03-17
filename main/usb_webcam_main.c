@@ -218,13 +218,14 @@ static void camera_fb_return_cb(uvc_fb_t *fb, void *cb_ctx)
 
 void app_main(void)
 {
+    // add  delay to have abbility to erase flash and add a new firmware
+    vTaskDelay(pdMS_TO_TICKS(10000));
+
     gpio_reset_pin(LED_GPIO);
     gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_GPIO, 0x01);
 
-    // add  delay to have abbility to erase flash and add a new firmware
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    
+
     uint8_t *uvc_buffer = (uint8_t *)malloc(UVC_MAX_FRAMESIZE_SIZE);
 
     if (!uvc_buffer)
