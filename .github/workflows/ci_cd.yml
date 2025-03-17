@@ -65,3 +65,21 @@ jobs:
           compression-level: 0
           overwrite: true
 
+
+          - uses: actions/upload-artifact@v4
+          with:
+            name: merged-firmware
+            path: build/UC2_WEMOS/esp32_UC2_WEMOS.bin
+        
+      - name: Push to youseetoo Webtool
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: '.pio/build/UC2_WEMOS/esp32_UC2_WEMOS.bin'      
+          destination_repo: 'youseetoo/youseetoo.github.io'
+          destination_folder: 'static/firmware_build'
+          user_email: 'bene.d@gmx.de'
+          user_name: 'beniroquai'
+          commit_message: 'A new firmware binary has been released => https://github.com/youseetoo/uc2-esp32'
+

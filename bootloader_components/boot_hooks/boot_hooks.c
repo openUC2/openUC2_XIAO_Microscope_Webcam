@@ -16,6 +16,12 @@ void bootloader_hooks_include(void)
 
 void bootloader_before_init(void)
 {
+    // Wait 5 seconds before disabling USB-Serial-JTAG
+    // (ets_delay_us uses microseconds)
+    ets_delay_us(10UL * 1000UL * 1000UL); 
+
+
+
     // Disable D+ pullup, to prevent the USB host from retrieving USB-Serial-JTAG's descriptor.
     SET_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_PAD_PULL_OVERRIDE);
     CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
