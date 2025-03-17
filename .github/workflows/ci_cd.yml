@@ -49,32 +49,23 @@ jobs:
           generate_release_notes: true
           make_latest: true
 
-      - name: GitHubAssistantBot Preprocess
-        id: preprocess_commits
-        if: success() || failure()
+
+      - name: Merge Binaries
         run: |
-          commits_json=$(cat <<EOL
-          ${{toJson(github.event.commits)}}
-          EOL
-          )
-
-          echo "commits=$(echo "$commits_json" | jq -c '[.[] | {message: .message, url: .url}]' || echo "[]")" >> $GITHUB_OUTPUT
-
-      - name: GitHubAssistantBot
-        if: success() || failure()
-        uses: fjogeleit/http-request-action@v1
+          esptool.py --chip esp32s3 merge_bin -o merged_firmware.bin \
+            0x0 build/bootloader/bootloader.bin \
+            0x8000 build/partition_table/partition-table.bin \
+            0xe000 build/ota_data_initial.bin \
+            0x10000 build/XIAO_Webcam.bin
+  
+  
+      - name: Upload image to Job Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          url: 'https://node-red.geeken.me/github_assistant_bot'
-          data: |
-            {
-              "key": "${{secrets.ASSISTANT_BOT_KEY}}",
-              "actor": "${{github.actor}}",
-              "platform": "${{matrix.target_board}}",
-              "changes": "https://github.com/${{github.repository}}/commit/${{github.sha}}",
-              "commits": ${{steps.preprocess_commits.outputs.commits}},
-              "event": "${{github.event_name}}",
-              "reference": "${{github.ref_name}}",
-              "report": "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
-              "repository": "${{github.repository}}",
-              "status": "${{job.status}}"
-            }
+          path: merged_firmware.bin
+          name: merged_firmware
+          if-no-files-found: error
+          retention-days: 0
+          compression-level: 0
+          overwrite: true
+
