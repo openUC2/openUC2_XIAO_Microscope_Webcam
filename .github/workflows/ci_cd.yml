@@ -52,12 +52,19 @@ jobs:
 
       - name: Merge Binaries
         run: |
+          docker run --rm \
+          -v ${{ github.workspace }}:/project \
+          -w /project \
+          -u $(id -u) \
+          -e HOME=/tmp \
+          -e IDF_TARGET=esp32s3 \
+          espressif/idf:release-v5.3 \
           esptool.py --chip esp32s3 merge_bin -o merged_firmware.bin \
             0x0 build/bootloader/bootloader.bin \
             0x8000 build/partition_table/partition-table.bin \
             0xe000 build/ota_data_initial.bin \
-            0x10000 build/XIAO_Webcam.bin
-  
+            0x10000 XIAO_Webcam.bin
+
   
       - name: Upload image to Job Artifacts
         uses: actions/upload-artifact@v4
