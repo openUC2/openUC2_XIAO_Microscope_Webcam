@@ -20,6 +20,7 @@ void bootloader_before_init(void)
 {
     // Wait 10 seconds before disabling USB-Serial-JTAG
     // (ets_delay_us uses microseconds)
+    REG_WRITE(RTC_CNTL_WDTCONFIG0_REG, 0);
     for (int i = 0; i < 10; i++) {
         ets_delay_us(1UL * 1000UL * 1000UL);
         // print log to show the bootloader is running
