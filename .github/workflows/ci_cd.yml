@@ -29,7 +29,7 @@ jobs:
             espressif/idf:release-v5.3 \
             bash -c '
               idf.py build &&
-              esptool.py --chip esp32s3 merge_bin -o merged_firmware.bin \
+              esptool.py --chip esp32s3 merge_bin -o xiao_webcam.bin \
                 0x0 build/bootloader/bootloader.bin \
                 0x8000 build/partition_table/partition-table.bin \
                 0xe000 build/ota_data_initial.bin \
@@ -58,8 +58,8 @@ jobs:
       - name: Upload image to Job Artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: merged_firmware.bin
-          name: merged_firmware
+          path: xiao_webcam.bin
+          name: xiao_webcam
           if-no-files-found: error
           retention-days: 0
           compression-level: 0
@@ -72,7 +72,7 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: '.pio/build/UC2_WEMOS/esp32_UC2_WEMOS.bin'      
+          source_file: 'xiao_webcam.bin'      
           destination_repo: 'youseetoo/youseetoo.github.io'
           destination_folder: 'static/firmware_build'
           user_email: 'bene.d@gmx.de'

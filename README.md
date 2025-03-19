@@ -33,3 +33,25 @@ then
 ```bash
 esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 460800 write_flash 0x0 merged_firmware.bin
 ```
+
+
+
+# Install IDF 
+
+```
+cd /Users/bene/Downloads/openUC2_XIAO_Microscope_Webcam/
+git clone -b v5.3 https://github.com/espressif/esp-idf.git
+cd esp-idf
+./install.sh
+. ./export.sh
+conda deactivate
+conda deactivate
+cd /Users/bene/Downloads/openUC2_XIAO_Microscope_Webcam/esp-idf
+source export.sh
+cd /Users/bene/Downloads/openUC2_XIAO_Microscope_Webcam/
+idf.py menuconfig
+
+cd /Users/bene/Downloads/openUC2_XIAO_Microscope_Webcam
+idf.py build IDF_TARGET=esp32s3 
+idf.py build && idf.py flash
+```
