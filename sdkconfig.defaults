@@ -28,8 +28,6 @@ CONFIG_FLASHMODE_QIO=y
 
 
 
-
-CONFIG_ESP_CONSOLE_UART_DEFAULT=n
 # Enable USB CDC console
 CONFIG_ESP_CONSOLE_USB_CDC=y
 
@@ -45,3 +43,15 @@ CONFIG_ESP_USB_OTG_ENABLED=y
 
 # Optional: reduce logging or debug prints to keep USB stable
 CONFIG_TINYUSB_DEBUG_LEVEL=5
+
+
+
+# Include HTTP Server component
+CONFIG_ESP_HTTP_SERVER_ENABLE_HTTPS=n
+CONFIG_ESP_HTTP_SERVER_ENABLE_BASIC_AUTH=n
+
+# Enable OTA component
+CONFIG_OTA_UPDATE=y
+
+# If you want logs on UART:
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
