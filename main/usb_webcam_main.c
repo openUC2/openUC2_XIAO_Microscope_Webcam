@@ -11,7 +11,7 @@
 #include "esp_ota_ops.h"
 #include "esp_http_server.h"
 #include "rom/ets_sys.h"
-
+#include <inttypes.h> 
 #include "esp_camera.h"
 #include "usb_device_uvc.h"
 #include "uvc_frame_config.h"
@@ -242,8 +242,9 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    ESP_LOGI(OTA_TAG, "Begin OTA to partition subtype %d at offset 0x%x",
-             ota_partition->subtype, ota_partition->address);
+
+    ESP_LOGI(OTA_TAG, "Begin OTA to partition subtype %d at offset 0x%" PRIu32,
+        ota_partition->subtype, ota_partition->address);
 
     esp_ota_handle_t ota_handle;
     esp_err_t err = esp_ota_begin(ota_partition, OTA_SIZE_UNKNOWN, &ota_handle);
@@ -327,8 +328,8 @@ static void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     esp_netif_create_default_wifi_init_config_t netif_cfg = ESP_NETIF_DEFAULT_WIFI_AP();
-    esp_netif_t *netif = esp_netif_create_default_wifi_ap(&netif_cfg);
-
+    esp_netif_t *netif = esp_netif_create_default_wifi_ap();
+    
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
