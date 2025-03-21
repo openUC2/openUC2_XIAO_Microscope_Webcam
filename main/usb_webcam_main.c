@@ -321,15 +321,20 @@ static httpd_handle_t start_webserver(void)
 /*******************************************************************
  * Access Point Setup
  *******************************************************************/
+// ...existing code...
 static void wifi_init_softap(void)
 {
     ESP_LOGI(TAG, "Initializing AP \"%s\"...", AP_SSID);
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    esp_netif_create_default_wifi_init_config_t netif_cfg = ESP_NETIF_DEFAULT_WIFI_AP();
+    // Entfernen Sie die veraltete Struktur-Initialisierung:
+    // esp_netif_create_default_wifi_init_config_t netif_cfg = ESP_NETIF_DEFAULT_WIFI_AP();
+
+    // Erstellen Sie das AP-Netif stattdessen direkt ohne Argumente:
     esp_netif_t *netif = esp_netif_create_default_wifi_ap();
-    
+    (void)netif; // Falls es nicht weiter verwendet wird
+
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -350,10 +355,10 @@ static void wifi_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    // IP is usually 192.168.4.1 for default AP mode
     ESP_LOGI(TAG, "SoftAP started. SSID: %s password:%s channel:%d",
              AP_SSID, AP_PASSWORD, AP_CHANNEL);
 }
+
 
 /*******************************************************************
  * Main Application
