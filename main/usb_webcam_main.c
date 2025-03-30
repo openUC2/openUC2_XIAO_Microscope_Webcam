@@ -315,6 +315,14 @@ static httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &root);
         httpd_register_uri_handler(server, &upload);
     }
+    // blink LED 3 times to indicate OTA server is running
+    for (int i = 0; i < 3; i++) {
+        gpio_set_level(LED_GPIO, 0x01);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        gpio_set_level(LED_GPIO, 0x00);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+    ESP_LOGI(TAG, "Webserver started on port %d", config.server_port);
     return server;
 }
 
@@ -357,6 +365,14 @@ static void wifi_init_softap(void)
 
     ESP_LOGI(TAG, "SoftAP started. SSID: %s password:%s channel:%d",
              AP_SSID, AP_PASSWORD, AP_CHANNEL);
+
+    // blink LED 5 times to indicate AP is running
+    for (int i = 0; i < 5; i++) {
+        gpio_set_level(LED_GPIO, 0x01);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        gpio_set_level(LED_GPIO, 0x00);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
 }
 
 
@@ -365,14 +381,6 @@ static void wifi_init_softap(void)
  *******************************************************************/
 void app_main(void)
 {
-    // Delay so we can press BOOT / do a flash erase if needed
-    vTaskDelay(pdMS_TO_TICKS(10000));
-
-    // LED setup (on many boards GPIO 21 is an LED or unused pin)
-    gpio_reset_pin(LED_GPIO);
-    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
-    gpio_set_level(LED_GPIO, 0x01); // Turn on LED at start
-
     // Initialize NVS (required by Wi-Fi and OTA)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -425,6 +433,12 @@ void app_main(void)
     // Main loop does nothing. UVC streaming + OTA webserver run in background tasks
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(5000));
-        // Could blink an LED, check memory, etc.
+
+        // Blink LED to indicate main loop is running
+        gpio_set_level(LED_GPIO, 0x01);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        gpio_set_level(LED_GPIO, 0x00);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        
     }
 }
