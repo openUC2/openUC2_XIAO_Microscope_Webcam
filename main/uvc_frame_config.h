@@ -5,7 +5,8 @@
  */
 #pragma once
 
-#include "usb_device_uvc.h"
+// This file must be included AFTER usb_device_uvc.h
+// to ensure uvc_frame_info_t is defined
 
 #ifdef __cplusplus
 extern "C" {
