@@ -21,7 +21,7 @@ extern "C" {
 // The host can select from these options in camera settings
 #define UVC_FRAMES_COUNT 4
 
-const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
+static const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
     {
         // MJPEG Format with multiple resolution options
         {
@@ -79,7 +79,7 @@ const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
 // More stable for basic use cases
 #define UVC_FRAMES_COUNT 1
 
-const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
+static const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
     {
         {
             .width = 800,
