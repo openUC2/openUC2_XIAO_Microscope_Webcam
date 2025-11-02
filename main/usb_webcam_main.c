@@ -15,6 +15,7 @@
 #include "esp_camera.h"
 #include "usb_device_uvc.h"
 #include "uvc_frame_config.h"
+#include "driver/gpio.h"
 
 static const char *TAG = "XIAO_Webcam_OTA_AP";
 
@@ -154,7 +155,7 @@ static esp_err_t camera_start_cb(uvc_format_t format, int width, int height, int
         jpeg_quality = 16;
     } else if (width == 1920 && height == 1080) {
         frame_size = FRAMESIZE_FHD;
-        jpeg_quality = 16;
+        jpeg_quality = 18;
     } else {
         ESP_LOGE(TAG, "Unsupported frame size %dx%d", width, height);
         return ESP_ERR_NOT_SUPPORTED;
@@ -164,6 +165,36 @@ static esp_err_t camera_start_cb(uvc_format_t format, int width, int height, int
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "camera init failed");
         return ret;
+    }
+
+    // Get camera sensor for control configuration
+    sensor_t *s = esp_camera_sensor_get();
+    if (s) {
+        // Configure default camera settings for better quality
+        s->set_brightness(s, 0);     // -2 to 2
+        s->set_contrast(s, 0);       // -2 to 2
+        s->set_saturation(s, 0);     // -2 to 2
+        s->set_special_effect(s, 0); // 0 to 6 (0 - No Effect, 1 - Negative, 2 - Grayscale, 3 - Red Tint, 4 - Green Tint, 5 - Blue Tint, 6 - Sepia)
+        s->set_whitebal(s, 1);       // 0 = disable , 1 = enable
+        s->set_awb_gain(s, 1);       // 0 = disable , 1 = enable
+        s->set_wb_mode(s, 0);        // 0 to 4 - if awb_gain enabled (0 - Auto, 1 - Sunny, 2 - Cloudy, 3 - Office, 4 - Home)
+        s->set_exposure_ctrl(s, 1);  // 0 = disable , 1 = enable
+        s->set_aec2(s, 0);           // 0 = disable , 1 = enable
+        s->set_ae_level(s, 0);       // -2 to 2
+        s->set_aec_value(s, 300);    // 0 to 1200
+        s->set_gain_ctrl(s, 1);      // 0 = disable , 1 = enable
+        s->set_agc_gain(s, 0);       // 0 to 30
+        s->set_gainceiling(s, (gainceiling_t)0);  // 0 to 6
+        s->set_bpc(s, 0);            // 0 = disable , 1 = enable
+        s->set_wpc(s, 1);            // 0 = disable , 1 = enable
+        s->set_raw_gma(s, 1);        // 0 = disable , 1 = enable
+        s->set_lenc(s, 1);           // 0 = disable , 1 = enable
+        s->set_hmirror(s, 0);        // 0 = disable , 1 = enable
+        s->set_vflip(s, 0);          // 0 = disable , 1 = enable
+        s->set_dcw(s, 1);            // 0 = disable , 1 = enable
+        s->set_colorbar(s, 0);       // 0 = disable , 1 = enable
+        
+        ESP_LOGI(TAG, "Camera sensor configured with default settings");
     }
 
     // Turn off LED to indicate camera streaming
@@ -199,6 +230,236 @@ static void camera_fb_return_cb(uvc_fb_t *fb, void *cb_ctx)
     assert(fb == &s_fb.uvc_fb);
     esp_camera_fb_return(s_fb.cam_fb_p);
 }
+
+/*******************************************************************
+ * UVC Processing Unit Control Handlers
+ * These functions handle camera control requests from the host
+ *******************************************************************/
+
+// Brightness control (-2 to 2)
+static esp_err_t uvc_control_brightness(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.brightness;
+        ESP_LOGD(TAG, "Get brightness: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        // Map UVC range to camera range (-2 to 2)
+        int32_t camera_value = (*value - 128) * 4 / 256;
+        if (camera_value < -2) camera_value = -2;
+        if (camera_value > 2) camera_value = 2;
+        s->set_brightness(s, camera_value);
+        ESP_LOGI(TAG, "Set brightness: %ld (camera: %ld)", *value, camera_value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 255;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 128;
+    }
+    return ESP_OK;
+}
+
+// Contrast control (-2 to 2)
+static esp_err_t uvc_control_contrast(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.contrast;
+        ESP_LOGD(TAG, "Get contrast: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        int32_t camera_value = (*value - 128) * 4 / 256;
+        if (camera_value < -2) camera_value = -2;
+        if (camera_value > 2) camera_value = 2;
+        s->set_contrast(s, camera_value);
+        ESP_LOGI(TAG, "Set contrast: %ld (camera: %ld)", *value, camera_value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 255;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 128;
+    }
+    return ESP_OK;
+}
+
+// Saturation control (-2 to 2)
+static esp_err_t uvc_control_saturation(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.saturation;
+        ESP_LOGD(TAG, "Get saturation: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        int32_t camera_value = (*value - 128) * 4 / 256;
+        if (camera_value < -2) camera_value = -2;
+        if (camera_value > 2) camera_value = 2;
+        s->set_saturation(s, camera_value);
+        ESP_LOGI(TAG, "Set saturation: %ld (camera: %ld)", *value, camera_value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 255;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 128;
+    }
+    return ESP_OK;
+}
+
+// Gain control (0 to 30)
+static esp_err_t uvc_control_gain(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.agc_gain;
+        ESP_LOGD(TAG, "Get gain: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        // Map 0-255 to 0-30
+        int32_t camera_value = (*value * 30) / 255;
+        if (camera_value > 30) camera_value = 30;
+        s->set_agc_gain(s, camera_value);
+        ESP_LOGI(TAG, "Set gain: %ld (camera: %ld)", *value, camera_value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 255;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 0;
+    }
+    return ESP_OK;
+}
+
+// Auto Exposure control (0 = manual, 1 = auto)
+static esp_err_t uvc_control_auto_exposure(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.aec ? 1 : 0;
+        ESP_LOGD(TAG, "Get auto exposure: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        s->set_exposure_ctrl(s, *value ? 1 : 0);
+        ESP_LOGI(TAG, "Set auto exposure: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 1;  // Auto exposure enabled by default
+    }
+    return ESP_OK;
+}
+
+// Exposure time control (0 to 1200)
+static esp_err_t uvc_control_exposure_time(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.aec_value;
+        ESP_LOGD(TAG, "Get exposure time: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        // Map 0-65535 to 0-1200
+        int32_t camera_value = (*value * 1200) / 65535;
+        if (camera_value > 1200) camera_value = 1200;
+        s->set_aec_value(s, camera_value);
+        ESP_LOGI(TAG, "Set exposure time: %ld (camera: %ld)", *value, camera_value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 65535;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 300 * 65535 / 1200;  // Default 300
+    }
+    return ESP_OK;
+}
+
+// Auto Gain control (0 = manual, 1 = auto)
+static esp_err_t uvc_control_auto_gain(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.agc ? 1 : 0;
+        ESP_LOGD(TAG, "Get auto gain: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        s->set_gain_ctrl(s, *value ? 1 : 0);
+        ESP_LOGI(TAG, "Set auto gain: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 1;  // Auto gain enabled by default
+    }
+    return ESP_OK;
+}
+
+// Auto White Balance control (0 = manual, 1 = auto)
+static esp_err_t uvc_control_auto_white_balance(uvc_control_req_type_t req_type, int32_t *value, void *cb_ctx)
+{
+    sensor_t *s = esp_camera_sensor_get();
+    if (!s) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    if (req_type == UVC_CONTROL_REQ_GET_CUR) {
+        *value = s->status.awb ? 1 : 0;
+        ESP_LOGD(TAG, "Get auto white balance: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_SET_CUR) {
+        s->set_whitebal(s, *value ? 1 : 0);
+        ESP_LOGI(TAG, "Set auto white balance: %ld", *value);
+    } else if (req_type == UVC_CONTROL_REQ_GET_MIN) {
+        *value = 0;
+    } else if (req_type == UVC_CONTROL_REQ_GET_MAX) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_RES) {
+        *value = 1;
+    } else if (req_type == UVC_CONTROL_REQ_GET_DEF) {
+        *value = 1;  // Auto white balance enabled by default
+    }
+    return ESP_OK;
+}
+
 
 /*******************************************************************
  * OTA Upload Handlers + Basic Web Form
@@ -381,6 +642,34 @@ static void wifi_init_softap(void)
  *******************************************************************/
 void app_main(void)
 {
+    // Initialize GPIO for LED indicator
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << LED_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io_conf);
+    gpio_set_level(LED_GPIO, 0x01);  // LED on during boot
+
+    // Boot delay to allow normal flashing without boot mode
+    #ifdef CONFIG_UVC_BOOT_DELAY_MS
+    if (CONFIG_UVC_BOOT_DELAY_MS > 0) {
+        ESP_LOGI(TAG, "Boot delay: %d ms (allows normal flashing)", CONFIG_UVC_BOOT_DELAY_MS);
+        ESP_LOGI(TAG, "You can flash firmware during this time without pressing boot button");
+        
+        // Blink LED during boot delay to indicate waiting period
+        int blink_count = CONFIG_UVC_BOOT_DELAY_MS / 500;
+        for (int i = 0; i < blink_count; i++) {
+            gpio_set_level(LED_GPIO, i % 2);
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        gpio_set_level(LED_GPIO, 0x01);  // LED on
+        ESP_LOGI(TAG, "Boot delay complete, starting UVC device");
+    }
+    #endif
+
     // Initialize NVS (required by Wi-Fi and OTA)
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -428,7 +717,23 @@ void app_main(void)
 #endif
 
     ESP_ERROR_CHECK(uvc_device_config(0, &config));
+    
+    // Register UVC Processing Unit controls for camera settings
+    // These allow control through standard webcam applications (e.g., Windows Camera)
+    ESP_LOGI(TAG, "Registering UVC Processing Unit controls");
+    uvc_device_register_control(UVC_PU_BRIGHTNESS_CONTROL, uvc_control_brightness, NULL);
+    uvc_device_register_control(UVC_PU_CONTRAST_CONTROL, uvc_control_contrast, NULL);
+    uvc_device_register_control(UVC_PU_SATURATION_CONTROL, uvc_control_saturation, NULL);
+    uvc_device_register_control(UVC_PU_GAIN_CONTROL, uvc_control_gain, NULL);
+    uvc_device_register_control(UVC_CT_AE_MODE_CONTROL, uvc_control_auto_exposure, NULL);
+    uvc_device_register_control(UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, uvc_control_exposure_time, NULL);
+    uvc_device_register_control(UVC_PU_BACKLIGHT_COMPENSATION_CONTROL, uvc_control_auto_gain, NULL);
+    uvc_device_register_control(UVC_PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, uvc_control_auto_white_balance, NULL);
+    
     ESP_ERROR_CHECK(uvc_device_init());
+
+    ESP_LOGI(TAG, "UVC Webcam initialized successfully!");
+    ESP_LOGI(TAG, "Camera controls available through standard webcam applications");
 
     // Main loop does nothing. UVC streaming + OTA webserver run in background tasks
     while (true) {

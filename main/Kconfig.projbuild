@@ -1,5 +1,23 @@
 menu "USB WebCam config"
 
+    config UVC_BOOT_DELAY_MS
+        int "UVC boot delay (milliseconds)"
+        range 0 30000
+        default 5000
+        help
+            Delay before initializing UVC device. This allows the ESP32S3
+            to be detected as a normal device for easier flashing without
+            needing to manually enter boot mode. Set to 0 to disable delay.
+            Recommended: 5000ms (5 seconds).
+
+    config CAMERA_MULTI_FRAMESIZE
+        bool "Enable multiple frame sizes"
+        default y
+        help
+            Enable support for multiple camera resolutions (640x480, 800x600,
+            1280x720, 1920x1080). When disabled, only single resolution (800x600)
+            is available, which provides more stable operation.
+
     config CAMERA_XCLK_FREQ
         int "XCLK frequency"
         range 1000000 40000000
