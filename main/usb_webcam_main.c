@@ -29,6 +29,87 @@ static const char *TAG = "XIAO_Webcam_OTA_AP";
 #define AP_CHANNEL   1
 #define MAX_STA_CONN 4  // Max stations that can connect
 
+/*******************************************************************
+ * UVC Frame Configuration
+ * Defines supported resolutions and frame rates for the webcam
+ *******************************************************************/
+#ifdef CONFIG_CAMERA_MULTI_FRAMESIZE
+// Multi-framesize configuration: supports multiple resolutions
+// The host can select from these options in camera settings
+static const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
+    {
+        // MJPEG Format with multiple resolution options
+        {
+            .width = 640,
+            .height = 480,
+            .rate = 15,          // VGA @ 15fps - good balance
+            .intervalType = UVC_FRAME_INTERVAL_TYPE_DISCRETE,
+            .interval = {
+                .discrete = {
+                    .numerator = 1,
+                    .denominator = 15,
+                }
+            }
+        },
+        {
+            .width = 800,
+            .height = 600,
+            .rate = 15,          // SVGA @ 15fps - higher quality
+            .intervalType = UVC_FRAME_INTERVAL_TYPE_DISCRETE,
+            .interval = {
+                .discrete = {
+                    .numerator = 1,
+                    .denominator = 15,
+                }
+            }
+        },
+        {
+            .width = 1280,
+            .height = 720,
+            .rate = 10,          // HD @ 10fps - HD quality
+            .intervalType = UVC_FRAME_INTERVAL_TYPE_DISCRETE,
+            .interval = {
+                .discrete = {
+                    .numerator = 1,
+                    .denominator = 10,
+                }
+            }
+        },
+        {
+            .width = 1920,
+            .height = 1080,
+            .rate = 5,           // Full HD @ 5fps - maximum quality
+            .intervalType = UVC_FRAME_INTERVAL_TYPE_DISCRETE,
+            .interval = {
+                .discrete = {
+                    .numerator = 1,
+                    .denominator = 5,
+                }
+            }
+        }
+    }
+};
+#else
+// Single framesize configuration: only one resolution available
+// More stable for basic use cases
+static const uvc_frame_info_t UVC_FRAMES_INFO[][UVC_FRAMES_COUNT] = {
+    {
+        {
+            .width = 800,
+            .height = 600,
+            .rate = 15,          // SVGA @ 15fps - default single mode
+            .intervalType = UVC_FRAME_INTERVAL_TYPE_DISCRETE,
+            .interval = {
+                .discrete = {
+                    .numerator = 1,
+                    .denominator = 15,
+                }
+            }
+        }
+    }
+};
+#endif
+
 typedef struct
 {
     camera_fb_t *cam_fb_p;
