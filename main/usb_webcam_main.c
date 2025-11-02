@@ -195,6 +195,8 @@ static esp_err_t camera_start_cb(uvc_format_t format, int width, int height, int
         s->set_colorbar(s, 0);       // 0 = disable , 1 = enable
         
         ESP_LOGI(TAG, "Camera sensor configured with default settings");
+    } else {
+        ESP_LOGW(TAG, "Failed to get camera sensor, using default settings");
     }
 
     // Turn off LED to indicate camera streaming
@@ -704,23 +706,32 @@ void app_main(void)
     ESP_LOGI(TAG, "UVC Format List");
     ESP_LOGI(TAG, "\tFormat(1) = MJPEG");
     ESP_LOGI(TAG, "Frame List");
-    ESP_LOGI(TAG, "\tFrame(1) = %d * %d @%dfps", UVC_FRAMES_INFO[0][0].width,
-               UVC_FRAMES_INFO[0][0].height, UVC_FRAMES_INFO[0][0].rate);
-
+    
 #if CONFIG_CAMERA_MULTI_FRAMESIZE
-    ESP_LOGI(TAG, "\tFrame(2) = %d * %d @%dfps", UVC_FRAMES_INFO[0][1].width,
-               UVC_FRAMES_INFO[0][1].height, UVC_FRAMES_INFO[0][1].rate);
-    ESP_LOGI(TAG, "\tFrame(3) = %d * %d @%dfps", UVC_FRAMES_INFO[0][2].width,
-               UVC_FRAMES_INFO[0][2].height, UVC_FRAMES_INFO[0][2].rate);
-    ESP_LOGI(TAG, "\tFrame(4) = %d * %d @%dfps", UVC_FRAMES_INFO[0][3].width,
-               UVC_FRAMES_INFO[0][3].height, UVC_FRAMES_INFO[0][3].rate);
+    // Log all available frame configurations
+    for (int i = 0; i < UVC_FRAMES_COUNT; i++) {
+        ESP_LOGI(TAG, "\tFrame(%d) = %d * %d @%dfps", i + 1,
+                   UVC_FRAMES_INFO[0][i].width,
+                   UVC_FRAMES_INFO[0][i].height, 
+                   UVC_FRAMES_INFO[0][i].rate);
+    }
+#else
+    // Single frame configuration
+    ESP_LOGI(TAG, "\tFrame(1) = %d * %d @%dfps", 
+               UVC_FRAMES_INFO[0][0].width,
+               UVC_FRAMES_INFO[0][0].height, 
+               UVC_FRAMES_INFO[0][0].rate);
 #endif
 
     ESP_ERROR_CHECK(uvc_device_config(0, &config));
     ESP_ERROR_CHECK(uvc_device_init());
 
     ESP_LOGI(TAG, "UVC Webcam initialized successfully!");
-    ESP_LOGI(TAG, "Supported resolutions: VGA, SVGA, HD, Full HD");
+#if CONFIG_CAMERA_MULTI_FRAMESIZE
+    ESP_LOGI(TAG, "Multi-resolution support enabled: VGA, SVGA, HD, Full HD");
+#else
+    ESP_LOGI(TAG, "Single resolution mode: SVGA (800x600)");
+#endif
     ESP_LOGI(TAG, "Camera sensor settings configured for optimal quality");
 
     // Main loop does nothing. UVC streaming + OTA webserver run in background tasks
