@@ -717,23 +717,11 @@ void app_main(void)
 #endif
 
     ESP_ERROR_CHECK(uvc_device_config(0, &config));
-    
-    // Register UVC Processing Unit controls for camera settings
-    // These allow control through standard webcam applications (e.g., Windows Camera)
-    ESP_LOGI(TAG, "Registering UVC Processing Unit controls");
-    uvc_device_register_control(UVC_PU_BRIGHTNESS_CONTROL, uvc_control_brightness, NULL);
-    uvc_device_register_control(UVC_PU_CONTRAST_CONTROL, uvc_control_contrast, NULL);
-    uvc_device_register_control(UVC_PU_SATURATION_CONTROL, uvc_control_saturation, NULL);
-    uvc_device_register_control(UVC_PU_GAIN_CONTROL, uvc_control_gain, NULL);
-    uvc_device_register_control(UVC_CT_AE_MODE_CONTROL, uvc_control_auto_exposure, NULL);
-    uvc_device_register_control(UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, uvc_control_exposure_time, NULL);
-    uvc_device_register_control(UVC_PU_BACKLIGHT_COMPENSATION_CONTROL, uvc_control_auto_gain, NULL);
-    uvc_device_register_control(UVC_PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, uvc_control_auto_white_balance, NULL);
-    
     ESP_ERROR_CHECK(uvc_device_init());
 
     ESP_LOGI(TAG, "UVC Webcam initialized successfully!");
-    ESP_LOGI(TAG, "Camera controls available through standard webcam applications");
+    ESP_LOGI(TAG, "Supported resolutions: VGA, SVGA, HD, Full HD");
+    ESP_LOGI(TAG, "Camera sensor settings configured for optimal quality");
 
     // Main loop does nothing. UVC streaming + OTA webserver run in background tasks
     while (true) {
